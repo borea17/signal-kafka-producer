@@ -1,0 +1,10 @@
+version: "3"
+services:
+  signal-cli-rest-api:
+    image: "bbernhard/signal-cli-rest-api:0.65"
+    environment:
+      - "MODE=normal" #supported modes: json-rpc, native, normal
+    ports:
+      - "$SIGNAL__PORT:8080"
+    volumes:
+      - "./signal-cli-config:/home/.local/share/signal-cli"

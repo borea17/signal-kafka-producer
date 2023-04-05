@@ -1,0 +1,50 @@
+version: "3"
+
+services:
+  zookeeper:
+    image: "confluentinc/cp-zookeeper:7.0.1"
+    container_name: "zookeeper"
+    ports:
+        - "$KAFKA__ZOOKEEPER__PORT:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - "./zoo/data:/var/lib/zookeeper/data"
+      - "./zoo/log:/var/lib/zookeeper/log"
+
+  broker:
+    image: "confluentinc/cp-kafka:7.0.1"
+    container_name: "broker"
+    depends_on:
+      - "zookeeper"
+    ports:
+      - "29092:29092"
+      - "$KAFKA__SERVER__PORT:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:$KAFKA__ZOOKEEPER__PORT"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:$KAFKA__SERVER__PORT"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: "localhost"
+    volumes:
+      - "./broker/data:/var/lib/kafka/data"
+
+  kafka-ui:
+    image: "provectuslabs/kafka-ui:v0.6.0"
+    container_name: "kafka-ui"
+    ports:
+      - "$KAFKA__UI__PORT:8080"
+    depends_on:
+      - "zookeeper"
+      - "broker"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "local"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "broker:29092"
+      KAFKA_CLUSTERS_0_ZOOKEEPER: "zookeeper:$KAFKA__ZOOKEEPER__PORT"
