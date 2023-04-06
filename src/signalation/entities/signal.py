@@ -15,7 +15,7 @@ class Attachment(BaseModel):
 
 
 class GroupInfo(BaseModel):
-    groupID: str
+    groupId: str
     type: Literal["DELIVER"]
 
 
