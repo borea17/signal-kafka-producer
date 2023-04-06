@@ -64,5 +64,5 @@ Note: You'll need to register your phone number with for the
 [dockerized signal messenger](https://github.com/bbernhard/signal-cli-rest-api). Simply follow the instructions
 in the terminal.
 
-You should see your produced messages on the kafka ui (https://localhost:8081)[https://localhost:8081]
+You should see your produced messages on the kafka ui [https://localhost:8081](https://localhost:8081)
 (use port from `.env` file).

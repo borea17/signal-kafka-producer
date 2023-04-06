@@ -1,3 +1,4 @@
+import base64
 import json
 from time import sleep
 from uuid import UUID
@@ -8,10 +9,11 @@ from confluent_kafka import Producer
 
 from signalation.conf.logger import get_logger
 from signalation.conf.settings import Config, SignalConfig, get_config
-from signalation.entities.signal import SignalMessage
+from signalation.entities.signal import SignalMessage, AttachmentFile
 
 logger = get_logger(__file__)
-KAFKA_TOPIC = "signal"
+KAFKA_MESSAGE_TOPIC = "signal"
+KAFKA_ATTACHMENT_TOPIC = "signal_attachments"
 
 
 @click.command()
@@ -27,34 +29,61 @@ def run(env_file_path: str) -> None:
     signal_producer_config = {"bootstrap.servers": config.kafka.server.bootstrap_servers}
     signal_producer = Producer(signal_producer_config)
     while True:
-        run_text_message_loop(config=config, signal_producer=signal_producer)
+        run_message_loop(config=config, signal_producer=signal_producer)
 
 
-def run_text_message_loop(config: Config, signal_producer: Producer) -> None:
+def run_message_loop(config: Config, signal_producer: Producer) -> None:
     """Retrieve signal messages and produce them to kafka."""
-    logger.info("Start receiving text messages...")
-    txt_messages = receive_text_messages(signal_config=config.signal)
-    num_message_kafka = sum([1 for message in txt_messages if message.relevant_for_kafka])
+    logger.info("Start receiving messages...")
+    messages = receive_messages(signal_config=config.signal)
+    num_message_kafka = sum([1 for message in messages if message.relevant_for_kafka])
     logger.info(
-        f"...received {len(txt_messages)} messages from which {num_message_kafka} are now sent to Kafka..."
+        f"...received {len(messages)} messages from which {num_message_kafka} are now sent to Kafka..."
     )
-    produce_text_messages(txt_messages=txt_messages, signal_producer=signal_producer)
+    produce_messages(messages=messages, signal_producer=signal_producer)
+
+    has_attachment = sum([message.has_attachment for message in messages]) > 0
+    if has_attachment:
+        logger.info("Start receiving attachments...")
+        attachments = receive_attachments(signal_config=config.signal, messages=messages)
+        produce_attachments(attachments=attachments, signal_producer=signal_producer)
+
     logger.info(f"Done. Sleeping for {config.signal.receive_in_s} s.")
     sleep(config.signal.receive_in_s)
 
 
-def produce_text_messages(txt_messages: list[SignalMessage], signal_producer: Producer) -> None:
-    """Send retrived messages (from signal server) to kafka."""
-    for message in txt_messages:
-        if message.relevant_for_kafka:
-            chat_name = message.chat_name
-            value = json.dumps(message.dict(), cls=UUIDEncoder)
-            signal_producer.produce(topic=KAFKA_TOPIC, key=chat_name, value=value)
-    # wait for all messages in the Producer queue to be delivered
-    signal_producer.flush()
+def receive_attachments(
+    signal_config: SignalConfig, messages: list[SignalMessage]
+) -> list[AttachmentFile]:
+    """Query `signal-cli-rest-api` for downloaded attachments, serve them and return list of Attachments."""
+    url = f"{signal_config.base_url}/v1/attachments"
+    attachments = []
+    for message in messages:
+        if message.has_attachment:
+            for attachment in message.attachments:
+                query_url = f"{url}/{attachment.id}"
+                try:
+                    result = requests.get(url=query_url, timeout=signal_config.timeout_in_s)
+                    attachment_file = AttachmentFile(
+                        atttachment_bytes=result.content,
+                        chat_name=message.chat_name,
+                        sender=message.msg_sender,
+                        timestamp_epoch=message.envelope.timestamp,
+                        attachment=attachment,
+                    )
+                    attachments.append(attachment_file)
+                except requests.exceptions.Timeout:
+                    logger.warning("Timeout occured.")
+                    result_json = []
+                except requests.exceptions.RequestException:
+                    logger.error(
+                        f"Make sure that `bbernhard/signal-cli-rest-api` is running under {signal_config.base_url}"
+                    )
+                    exit(1)
+    return attachments
 
 
-def receive_text_messages(signal_config: SignalConfig) -> list[SignalMessage]:
+def receive_messages(signal_config: SignalConfig) -> list[SignalMessage]:
     """Query `signal-cli-rest-api` and parse results into list of `SignalMessage`s."""
     url = f"{signal_config.base_url}/v1/receive/{signal_config.registered_number}"
     try:
@@ -74,6 +103,8 @@ def receive_text_messages(signal_config: SignalConfig) -> list[SignalMessage]:
 
                     then open Signal on your phone, go to `Settings > Linked Devices` 
                     and scan the QR code using the + button.
+
+                    You should see `signal-api` as a linked device in your list.
                 """
                 logger.info(msg)
                 input("Press Enter once you are done...")
@@ -88,7 +119,7 @@ def receive_text_messages(signal_config: SignalConfig) -> list[SignalMessage]:
         result_json = []
     except requests.exceptions.RequestException:
         logger.error(
-            f"Make that `bbernhard/signal-cli-rest-api` is running under {signal_config.signal.base_url}"
+            f"Make that `bbernhard/signal-cli-rest-api` is running under {signal_config.base_url}"
         )
         exit(1)
 
@@ -102,8 +133,29 @@ def receive_text_messages(signal_config: SignalConfig) -> list[SignalMessage]:
     return signal_messages
 
 
+def produce_messages(messages: list[SignalMessage], signal_producer: Producer) -> None:
+    """Send retrived messages (from signal server) to kafka."""
+    for message in messages:
+        if message.relevant_for_kafka:
+            chat_name = message.chat_name
+            value = json.dumps(message.dict(), cls=UUIDEncoder)
+            signal_producer.produce(topic=KAFKA_MESSAGE_TOPIC, key=chat_name, value=value)
+    # wait for all messages in the Producer queue to be delivered
+    signal_producer.flush()
+
+
+def produce_attachments(attachments: list[AttachmentFile], signal_producer: Producer) -> None:
+    for attachment in attachments:
+        chat_name = attachment.chat_name
+        value = json.dumps(attachment.dict(), cls=UUIDEncoder)
+
+        signal_producer.produce(topic=KAFKA_ATTACHMENT_TOPIC, key=chat_name, value=value)
+    # wait for all messages in the Producer queue to be delivered
+    signal_producer.flush()
+
+
 class UUIDEncoder(json.JSONEncoder):
-    """Standard json encoder cannot encode UUIDs, this simple workaround, see
+    """Standard json encoder cannot encode UUIDs nor bytes, this simple workaround, see
     https://stackoverflow.com/a/48159596/12999800
     """
 
@@ -111,6 +163,8 @@ class UUIDEncoder(json.JSONEncoder):
         if isinstance(obj, UUID):
             # if the obj is uuid, we simply return the value of uuid
             return obj.hex
+        elif isinstance(obj, bytes):
+            return base64.b64encode(obj).decode("ascii")
         return json.JSONEncoder.default(self, obj)
 
 

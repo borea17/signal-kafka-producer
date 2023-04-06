@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 
 class Attachment(BaseModel):
-    content_type: str
+    contentType: str
     filename: str
     id: str
     size: int
@@ -28,7 +28,7 @@ class Message(BaseModel):
     timestamp: int
     viewOnce: bool
     expiresInSeconds: int
-    attachments: Optional[list[Attachment]] = None
+    attachments: Optional[list[Attachment]] = []
     groupInfo: GroupInfo | None
 
 
@@ -53,10 +53,11 @@ class SyncMessage(BaseModel):
 
 class DataMessage(BaseModel):
     timestamp: int
-    message: str
+    message: str | None
     expiresInSeconds: int
     viewOnce: bool
     groupInfo: Optional[GroupInfo] = None
+    attachments: Optional[list[Attachment]] = []
 
 
 class SignalEnvelope(BaseModel):
@@ -85,6 +86,20 @@ class SignalMessage(BaseModel):
             return True
         else:
             return False
+
+    @property
+    def attachments(self) -> list[Attachment]:
+        if type(self.envelope.syncMessage) == SyncMessage:
+            return self.envelope.syncMessage.sentMessage.attachments
+        elif type(self.envelope.dataMessage) == DataMessage:
+            return self.envelope.dataMessage.attachments
+        else:
+            return []
+
+    @property
+    def has_attachment(self) -> bool:
+        """Whether there is an associated attachment."""
+        return len(self.attachments) > 0
 
     @property
     def chat_name(self) -> str:
@@ -118,7 +133,7 @@ class SignalMessage(BaseModel):
             return ""
 
     @property
-    def timestamp(self) -> int:
+    def timestamp(self) -> pd.Timestamp:
         """Utility to get associated timestamp"""
         if type(self.envelope.syncMessage) == SyncMessage:
             timestamp_epoch = self.envelope.syncMessage.sentMessage.timestamp
@@ -127,3 +142,16 @@ class SignalMessage(BaseModel):
         else:
             timestamp_epoch = 0
         return pd.to_datetime(timestamp_epoch * 1000000)
+
+
+class AttachmentFile(BaseModel):
+
+    atttachment_bytes: bytes
+    chat_name: str
+    sender: str
+    timestamp_epoch: int
+    attachment: Attachment
+
+    @property
+    def timestamp(self) -> pd.Timestamp:
+        return pd.to_datetime(self.timestamp_epoch * 1000000)
