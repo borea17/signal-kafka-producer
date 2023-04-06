@@ -7,7 +7,7 @@ import requests
 from confluent_kafka import Producer
 
 from signalation.conf.logger import get_logger
-from signalation.conf.settings import SignalConfig, get_config
+from signalation.conf.settings import Config, SignalConfig, get_config
 from signalation.entities.signal import SignalMessage
 
 logger = get_logger(__file__)
@@ -27,20 +27,25 @@ def run(env_file_path: str) -> None:
     signal_producer_config = {"bootstrap.servers": config.kafka.server.bootstrap_servers}
     signal_producer = Producer(signal_producer_config)
     while True:
-        logger.info("Start receiving messages...")
-        messages = receive_messages(signal_config=config.signal)
-        num_message_kafka = sum([1 for message in messages if message.relevant_for_kafka])
-        logger.info(
-            f"...received {len(messages)} messages from which {num_message_kafka} are now sent to Kafka..."
-        )
-        produce_messages(messages=messages, signal_producer=signal_producer)
-        logger.info(f"Done. Sleeping for {config.signal.receive_in_s} s.")
-        sleep(config.signal.receive_in_s)
+        run_text_message_loop(config=config, signal_producer=signal_producer)
 
 
-def produce_messages(messages: list[SignalMessage], signal_producer: Producer) -> None:
+def run_text_message_loop(config: Config, signal_producer: Producer) -> None:
+    """Retrieve signal messages and produce them to kafka."""
+    logger.info("Start receiving text messages...")
+    txt_messages = receive_text_messages(signal_config=config.signal)
+    num_message_kafka = sum([1 for message in txt_messages if message.relevant_for_kafka])
+    logger.info(
+        f"...received {len(txt_messages)} messages from which {num_message_kafka} are now sent to Kafka..."
+    )
+    produce_text_messages(txt_messages=txt_messages, signal_producer=signal_producer)
+    logger.info(f"Done. Sleeping for {config.signal.receive_in_s} s.")
+    sleep(config.signal.receive_in_s)
+
+
+def produce_text_messages(txt_messages: list[SignalMessage], signal_producer: Producer) -> None:
     """Send retrived messages (from signal server) to kafka."""
-    for message in messages:
+    for message in txt_messages:
         if message.relevant_for_kafka:
             chat_name = message.chat_name
             value = json.dumps(message.dict(), cls=UUIDEncoder)
@@ -49,7 +54,7 @@ def produce_messages(messages: list[SignalMessage], signal_producer: Producer) -
     signal_producer.flush()
 
 
-def receive_messages(signal_config: SignalConfig) -> list[SignalMessage]:
+def receive_text_messages(signal_config: SignalConfig) -> list[SignalMessage]:
     """Query `signal-cli-rest-api` and parse results into list of `SignalMessage`s."""
     url = f"{signal_config.base_url}/v1/receive/{signal_config.registered_number}"
     try:
@@ -57,8 +62,27 @@ def receive_messages(signal_config: SignalConfig) -> list[SignalMessage]:
         result_json = result.json()
         if "error" in result_json:
             received_error_msg = result_json["error"]
-            logger.error(f"Received an error when querying {url}:\n{received_error_msg}")
-            exit(1)
+            not_registered_error = f"User {signal_config.registered_number} is not registered.\n"
+            if received_error_msg == not_registered_error:
+                link = f"http://{signal_config.ip_adress}:{signal_config.port}/v1/qrcodelink?device_name=signal-api"
+                msg = f"""
+                    {signal_config.registered_number} is not registered.
+
+                    Open the following link in your browser
+
+                    {link}
+
+                    then open Signal on your phone, go to `Settings > Linked Devices` 
+                    and scan the QR code using the + button.
+                """
+                logger.info(msg)
+                input("Press Enter once you are done...")
+
+                result_json = []
+            else:
+
+                logger.error(f"Received an error when querying {url}:\n{received_error_msg}")
+                result_json = []
     except requests.exceptions.Timeout:
         logger.warning("Timeout occured.")
         result_json = []
