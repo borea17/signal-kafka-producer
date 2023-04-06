@@ -1,10 +1,11 @@
 """Signal object definitions as defined from `bbernhard/signal-cli-rest-api`."""
 
+import base64
 from typing import Literal, Optional
 from uuid import UUID
 
 import pandas as pd
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 
 class Attachment(BaseModel):
@@ -146,11 +147,21 @@ class SignalMessage(BaseModel):
 
 class AttachmentFile(BaseModel):
 
-    atttachment_bytes: bytes
+    attachment_bytes_str: str
     chat_name: str
     sender: str
     timestamp_epoch: int
     attachment: Attachment
+
+    @validator("attachment_bytes_str", always=True, pre=True)
+    def bytes_to_str(cls, attachment_byte_or_str: bytes | str) -> str:
+        if type(attachment_byte_or_str) == bytes:
+            attachment_byte_or_str = base64.b64encode(attachment_byte_or_str).decode("ascii")
+        return attachment_byte_or_str
+
+    @property
+    def attachment_bytes(self) -> bytes:
+        return base64.b64decode(self.attachment_bytes_str)
 
     @property
     def timestamp(self) -> pd.Timestamp:

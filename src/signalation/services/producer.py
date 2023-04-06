@@ -65,7 +65,7 @@ def receive_attachments(
                 try:
                     result = requests.get(url=query_url, timeout=signal_config.timeout_in_s)
                     attachment_file = AttachmentFile(
-                        atttachment_bytes=result.content,
+                        attachment_bytes_str=result.content,  # will be encoded to str through pydantic validator
                         chat_name=message.chat_name,
                         sender=message.msg_sender,
                         timestamp_epoch=message.envelope.timestamp,
@@ -155,7 +155,7 @@ def produce_attachments(attachments: list[AttachmentFile], signal_producer: Prod
 
 
 class UUIDEncoder(json.JSONEncoder):
-    """Standard json encoder cannot encode UUIDs nor bytes, this simple workaround, see
+    """Standard json encoder cannot encode UUIDs, this is a simple workaround, see
     https://stackoverflow.com/a/48159596/12999800
     """
 
@@ -163,8 +163,6 @@ class UUIDEncoder(json.JSONEncoder):
         if isinstance(obj, UUID):
             # if the obj is uuid, we simply return the value of uuid
             return obj.hex
-        elif isinstance(obj, bytes):
-            return base64.b64encode(obj).decode("ascii")
         return json.JSONEncoder.default(self, obj)
 
 
