@@ -1,4 +1,3 @@
-import base64
 import json
 from time import sleep
 from uuid import UUID
@@ -9,7 +8,7 @@ from confluent_kafka import Producer
 
 from signalation.conf.logger import get_logger
 from signalation.conf.settings import Config, SignalConfig, get_config
-from signalation.entities.signal import SignalMessage, AttachmentFile
+from signalation.entities.signal import AttachmentFile, SignalMessage
 
 logger = get_logger(__file__)
 KAFKA_MESSAGE_TOPIC = "signal"
@@ -37,9 +36,7 @@ def run_message_loop(config: Config, signal_producer: Producer) -> None:
     logger.info("Start receiving messages...")
     messages = receive_messages(signal_config=config.signal)
     num_message_kafka = sum([1 for message in messages if message.relevant_for_kafka])
-    logger.info(
-        f"...received {len(messages)} messages from which {num_message_kafka} are now sent to Kafka..."
-    )
+    logger.info(f"...received {len(messages)} messages from which {num_message_kafka} are now sent to Kafka...")
     produce_messages(messages=messages, signal_producer=signal_producer)
 
     has_attachment = sum([message.has_attachment for message in messages]) > 0
@@ -52,9 +49,7 @@ def run_message_loop(config: Config, signal_producer: Producer) -> None:
     sleep(config.signal.receive_in_s)
 
 
-def receive_attachments(
-    signal_config: SignalConfig, messages: list[SignalMessage]
-) -> list[AttachmentFile]:
+def receive_attachments(signal_config: SignalConfig, messages: list[SignalMessage]) -> list[AttachmentFile]:
     """Query `signal-cli-rest-api` for downloaded attachments, serve them and return list of Attachments."""
     url = f"{signal_config.base_url}/v1/attachments"
     attachments = []
@@ -74,7 +69,6 @@ def receive_attachments(
                     attachments.append(attachment_file)
                 except requests.exceptions.Timeout:
                     logger.warning("Timeout occured.")
-                    result_json = []
                 except requests.exceptions.RequestException:
                     logger.error(
                         f"Make sure that `bbernhard/signal-cli-rest-api` is running under {signal_config.base_url}"
@@ -101,7 +95,7 @@ def receive_messages(signal_config: SignalConfig) -> list[SignalMessage]:
 
                     {link}
 
-                    then open Signal on your phone, go to `Settings > Linked Devices` 
+                    then open Signal on your phone, go to `Settings > Linked Devices`
                     and scan the QR code using the + button.
 
                     You should see `signal-api` as a linked device in your list.
@@ -118,9 +112,7 @@ def receive_messages(signal_config: SignalConfig) -> list[SignalMessage]:
         logger.warning("Timeout occured.")
         result_json = []
     except requests.exceptions.RequestException:
-        logger.error(
-            f"Make that `bbernhard/signal-cli-rest-api` is running under {signal_config.base_url}"
-        )
+        logger.error(f"Make that `bbernhard/signal-cli-rest-api` is running under {signal_config.base_url}")
         exit(1)
 
     signal_messages = []
