@@ -167,3 +167,5 @@ signal-cli-config/
 # # kafka storage
 zoo/
 broker/
+# attachment folder
+attachments/

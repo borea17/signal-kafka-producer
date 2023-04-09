@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pydantic import BaseModel, BaseSettings
+from pydantic import BaseModel, BaseSettings, validator
 
 
 class PortConfig(BaseModel):
@@ -43,9 +43,15 @@ class KafkaConfig(BaseModel):
 class Config(BaseSettings):
     signal: SignalConfig
     kafka: KafkaConfig
+    attachment_folder_path: Path
 
     class Config:
         env_nested_delimiter = "__"
+
+    @validator("attachment_folder_path", always=True)
+    def create_folder_if_necessary(cls, attachment_folder_path: Path) -> Path:
+        attachment_folder_path.mkdir(parents=True, exist_ok=True)
+        return attachment_folder_path
 
 
 def get_config(env_file_path: Path | str = ".env") -> Config:

@@ -1,16 +1,15 @@
 """Signal object definitions as defined from `bbernhard/signal-cli-rest-api`."""
 
-import base64
 from typing import Literal, Optional
 from uuid import UUID
 
 import pandas as pd
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, root_validator
 
 
 class Attachment(BaseModel):
     contentType: str
-    filename: str
+    filename: str | None
     id: str
     size: int
 
@@ -72,6 +71,13 @@ class SignalEnvelope(BaseModel):
     dataMessage: Optional[DataMessage] = None
     syncMessage: Optional[SyncMessage | SyncMessageType | SyncMessageReadMessages] = None
 
+    @root_validator(pre=True)
+    def remove_empty(cls, values):
+        for empty_field in ["dataMessage", "syncMessage"]:
+            if values.get(empty_field) == {}:
+                values.pop(empty_field)
+        return values
+
 
 class SignalMessage(BaseModel):
     envelope: SignalEnvelope
@@ -80,7 +86,10 @@ class SignalMessage(BaseModel):
     @property
     def relevant_for_kafka(self) -> bool:
         """Utility to determine whether the message should be produced to kafka."""
-        if type(self.envelope.syncMessage) == SyncMessage or type(self.envelope.dataMessage) == DataMessage:
+        if (
+            type(self.envelope.syncMessage) == SyncMessage
+            or type(self.envelope.dataMessage) == DataMessage
+        ):
             return True
         else:
             return False
@@ -109,7 +118,7 @@ class SignalMessage(BaseModel):
                 if self.envelope.syncMessage.sentMessage.destinationNumber is not None:
                     return self.envelope.syncMessage.sentMessage.destinationNumber
                 else:
-                    return self.envelope.syncMessage.sentMessage.groupInfo.groupID
+                    return self.envelope.syncMessage.sentMessage.groupInfo.groupId
         elif type(self.envelope.dataMessage) == DataMessage:
             return self.envelope.sourceNumber
         else:
@@ -140,26 +149,3 @@ class SignalMessage(BaseModel):
         else:
             timestamp_epoch = 0
         return pd.to_datetime(timestamp_epoch * 1000000)
-
-
-class AttachmentFile(BaseModel):
-
-    attachment_bytes_str: str
-    chat_name: str
-    sender: str
-    timestamp_epoch: int
-    attachment: Attachment
-
-    @validator("attachment_bytes_str", always=True, pre=True)
-    def bytes_to_str(cls, attachment_byte_or_str: bytes | str) -> str:
-        if type(attachment_byte_or_str) == bytes:
-            attachment_byte_or_str = base64.b64encode(attachment_byte_or_str).decode("ascii")
-        return attachment_byte_or_str
-
-    @property
-    def attachment_bytes(self) -> bytes:
-        return base64.b64decode(self.attachment_bytes_str)
-
-    @property
-    def timestamp(self) -> pd.Timestamp:
-        return pd.to_datetime(self.timestamp_epoch * 1000000)

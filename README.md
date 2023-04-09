@@ -51,13 +51,14 @@ In order to run the [dockerized signal messenger](https://github.com/bbernhard/s
 you'll need to run
 
 ```bash
-make run_docker_services
+docker-compose -f dockerized_services/signal/docker-compose.yml --env-file .env up -d
+docker-compose -f dockerized_services/kafka/docker-compose.yml --env-file .env up -d
 ```
 
-5. Start Producer
+5. Start Producer via CLI
 
 ```bash
-signal-kafka-producer
+signal-kafka-producer --env_file_path .env
 ```
 
 Note: You'll need to register your phone number with for the

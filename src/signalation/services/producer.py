@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from time import sleep
 from uuid import UUID
 
@@ -8,7 +9,8 @@ from confluent_kafka import Producer
 
 from signalation.conf.logger import get_logger
 from signalation.conf.settings import Config, SignalConfig, get_config
-from signalation.entities.signal import AttachmentFile, SignalMessage
+from signalation.entities.attachment import AttachmentFile
+from signalation.entities.signal_message import SignalMessage
 
 logger = get_logger(__file__)
 KAFKA_MESSAGE_TOPIC = "signal"
@@ -23,15 +25,15 @@ KAFKA_ATTACHMENT_TOPIC = "signal_attachments"
     help="Path to env file used by configuration.",
     type=click.Path(),
 )
-def run(env_file_path: str) -> None:
+def run(env_file_path: Path) -> None:
     config = get_config(env_file_path=env_file_path)
     signal_producer_config = {"bootstrap.servers": config.kafka.server.bootstrap_servers}
     signal_producer = Producer(signal_producer_config)
     while True:
-        run_message_loop(config=config, signal_producer=signal_producer)
+        run_message_loop_iteration(config=config, signal_producer=signal_producer)
 
 
-def run_message_loop(config: Config, signal_producer: Producer) -> None:
+def run_message_loop_iteration(config: Config, signal_producer: Producer) -> None:
     """Retrieve signal messages and produce them to kafka."""
     logger.info("Start receiving messages...")
     messages = receive_messages(signal_config=config.signal)
@@ -42,17 +44,23 @@ def run_message_loop(config: Config, signal_producer: Producer) -> None:
     has_attachment = sum([message.has_attachment for message in messages]) > 0
     if has_attachment:
         logger.info("Start receiving attachments...")
-        attachments = receive_attachments(signal_config=config.signal, messages=messages)
-        produce_attachments(attachments=attachments, signal_producer=signal_producer)
+        attachment_files = receive_attachments(
+            signal_config=config.signal,
+            messages=messages,
+            attachment_dir=config.attachment_folder_path,
+        )
+        produce_attachments(attachment_files=attachment_files, signal_producer=signal_producer)
 
     logger.info(f"Done. Sleeping for {config.signal.receive_in_s} s.")
     sleep(config.signal.receive_in_s)
 
 
-def receive_attachments(signal_config: SignalConfig, messages: list[SignalMessage]) -> list[AttachmentFile]:
-    """Query `signal-cli-rest-api` for downloaded attachments, serve them and return list of Attachments."""
+def receive_attachments(
+    signal_config: SignalConfig, messages: list[SignalMessage], attachment_dir: Path
+) -> list[AttachmentFile]:
+    """Query `signal-cli-rest-api` for downloaded attachments, serve them and return list of attachments files."""
     url = f"{signal_config.base_url}/v1/attachments"
-    attachments = []
+    attachment_files = []
     for message in messages:
         if message.has_attachment:
             for attachment in message.attachments:
@@ -65,8 +73,9 @@ def receive_attachments(signal_config: SignalConfig, messages: list[SignalMessag
                         sender=message.msg_sender,
                         timestamp_epoch=message.envelope.timestamp,
                         attachment=attachment,
+                        attachment_dir=attachment_dir,
                     )
-                    attachments.append(attachment_file)
+                    attachment_files.append(attachment_file)
                 except requests.exceptions.Timeout:
                     logger.warning("Timeout occured.")
                 except requests.exceptions.RequestException:
@@ -74,7 +83,7 @@ def receive_attachments(signal_config: SignalConfig, messages: list[SignalMessag
                         f"Make sure that `bbernhard/signal-cli-rest-api` is running under {signal_config.base_url}"
                     )
                     exit(1)
-    return attachments
+    return attachment_files
 
 
 def receive_messages(signal_config: SignalConfig) -> list[SignalMessage]:
@@ -105,7 +114,6 @@ def receive_messages(signal_config: SignalConfig) -> list[SignalMessage]:
 
                 result_json = []
             else:
-
                 logger.error(f"Received an error when querying {url}:\n{received_error_msg}")
                 result_json = []
     except requests.exceptions.Timeout:
@@ -130,24 +138,33 @@ def produce_messages(messages: list[SignalMessage], signal_producer: Producer) -
     for message in messages:
         if message.relevant_for_kafka:
             chat_name = message.chat_name
-            value = json.dumps(message.dict(), cls=UUIDEncoder)
+            value = json.dumps(message.dict(), cls=EnhancedEncoder)
             signal_producer.produce(topic=KAFKA_MESSAGE_TOPIC, key=chat_name, value=value)
     # wait for all messages in the Producer queue to be delivered
     signal_producer.flush()
 
 
-def produce_attachments(attachments: list[AttachmentFile], signal_producer: Producer) -> None:
-    for attachment in attachments:
-        chat_name = attachment.chat_name
-        value = json.dumps(attachment.dict(), cls=UUIDEncoder)
+def produce_attachments(attachment_files: list[AttachmentFile], signal_producer: Producer) -> None:
+    for attachment_file in attachment_files:
+        chat_name = attachment_file.chat_name
+        attachment_json_str = json.dumps(attachment_file.dict(), cls=EnhancedEncoder)
 
-        signal_producer.produce(topic=KAFKA_ATTACHMENT_TOPIC, key=chat_name, value=value)
+        # store raw attachemnt file
+        with open(attachment_file.raw_file_path, "w") as f:
+            f.write(attachment_json_str)
+        # store actual attachment
+        with open(attachment_file.actual_file_path, "wb") as f:
+            f.write(attachment_file.attachment_bytes)
+
+        # produce meta data to kafka
+        meta_data_str = json.dumps(attachment_file.meta_data_dict, cls=EnhancedEncoder)
+        signal_producer.produce(topic=KAFKA_ATTACHMENT_TOPIC, key=chat_name, value=meta_data_str)
     # wait for all messages in the Producer queue to be delivered
     signal_producer.flush()
 
 
-class UUIDEncoder(json.JSONEncoder):
-    """Standard json encoder cannot encode UUIDs, this is a simple workaround, see
+class EnhancedEncoder(json.JSONEncoder):
+    """Standard json encoder cannot encode UUIDs nor Paths, this is a simple workaround, see
     https://stackoverflow.com/a/48159596/12999800
     """
 
@@ -155,6 +172,8 @@ class UUIDEncoder(json.JSONEncoder):
         if isinstance(obj, UUID):
             # if the obj is uuid, we simply return the value of uuid
             return obj.hex
+        elif isinstance(obj, Path):
+            return str(obj)
         return json.JSONEncoder.default(self, obj)
 
 
