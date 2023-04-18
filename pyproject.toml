@@ -4,9 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "signalation"
-version = "1.0.0"
-description = "Signal replication package for educational purposes."
+version = "0.0.0"
+description = "Produce your messages from your signal account to kafka."
 readme = "README.md"
+authors = [{name="Markus Borea", email="borea17@protonmail.com"}]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
 requires-python = ">=3.10"
 
 dependencies = [
@@ -32,6 +39,9 @@ dev = [
     "pytest-timeout==2.1.0",
     "pdbpp>=0.10.3",
 ]
+
+[project.urls]
+Homepage = "https://github.com/borea17/signal-kafka-producer"
 
 [project.scripts]
 signal-kafka-producer = "signalation.services.producer:run"

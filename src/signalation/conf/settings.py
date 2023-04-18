@@ -27,17 +27,6 @@ class KafkaServerConfig(PortConfig):
 class KafkaConfig(BaseModel):
     ui: PortConfig
     server: KafkaServerConfig
-    zookeeper: PortConfig
-
-    @property
-    def brokers(self) -> dict:
-        return {
-            "localhost": {
-                "url": "localhost",
-                "description": "local development kafka broker",
-                "port": self.server.port,
-            },
-        }
 
 
 class Config(BaseSettings):
