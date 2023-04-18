@@ -1,6 +1,6 @@
 # signal-kafka-producer a.k.a. signalation
 
-**[Motivation](https://github.com/borea17/signal-kafka-producer#motivation---why-should-i-use-it?)** | **[Installation](https://github.com/borea17/signal-kafka-producer#installation---how-can-i-use-it?)** | \*\*[Implementation Details](https://github.com/borea17/signal-kafka-producer#implementation-details---how-does-it-work?)
+**[Motivation](https://github.com/borea17/signal-kafka-producer#motivation---why-should-i-use-it)** | **[Installation](https://github.com/borea17/signal-kafka-producer#installation---how-can-i-use-it)** | **[Implementation Details](https://github.com/borea17/signal-kafka-producer#implementation-details---how-does-it-work)**
 
 Python package to produce messages from your [signal](https://signal.org/) account to [kafka](https://kafka.apache.org/)
 by querying the [dockerized signal messenger API](https://github.com/bbernhard/signal-cli-rest-api).
