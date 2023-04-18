@@ -86,10 +86,7 @@ class SignalMessage(BaseModel):
     @property
     def relevant_for_kafka(self) -> bool:
         """Utility to determine whether the message should be produced to kafka."""
-        if (
-            type(self.envelope.syncMessage) == SyncMessage
-            or type(self.envelope.dataMessage) == DataMessage
-        ):
+        if type(self.envelope.syncMessage) == SyncMessage or type(self.envelope.dataMessage) == DataMessage:
             return True
         else:
             return False

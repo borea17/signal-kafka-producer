@@ -1,17 +1,17 @@
 # signal-kafka-producer a.k.a. signalation
 
-**[Motivation](https://github.com/borea17/signal-kafka-producer#motivation)** | **[Installation](https://github.com/borea17/signal-kafka-producer#installation)**
+**[Motivation](https://github.com/borea17/signal-kafka-producer#motivation---why-should-i-use-it?)** | **[Installation](https://github.com/borea17/signal-kafka-producer#installation---how-can-i-use-it?)** | \*\*[Implementation Details](https://github.com/borea17/signal-kafka-producer#implementation-details---how-does-it-work?)
 
-This python package allows to produce messages from your [signal](https://signal.org/) account to [kafka](https://kafka.apache.org/)
-by querying the [dockerized signal messenger](https://github.com/bbernhard/signal-cli-rest-api).
+Python package to produce messages from your [signal](https://signal.org/) account to [kafka](https://kafka.apache.org/)
+by querying the [dockerized signal messenger API](https://github.com/bbernhard/signal-cli-rest-api).
 
-## Motivation
+## Motivation - Why should I use it?
 
 ### Kafka Consumers
 
 ### Maintain Messages in Message Queue
 
-## Installation
+## Installation - How can I use it?
 
 For running the `signal-kafka-producer`, you'll need to have a access to a running instance of [kafka](https://kafka.apache.org/)
 and [signal](https://github.com/bbernhard/signal-cli-rest-api). If you do not have that go to
@@ -98,3 +98,5 @@ in the terminal.
 
 You should see your produced messages on the kafka ui [https://localhost:8081](https://localhost:8081)
 (use port from `.env` file).
+
+## Implementation Details - How does it work?
