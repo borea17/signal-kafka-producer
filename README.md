@@ -1,4 +1,4 @@
-# signal-kafka-producer a.k.a. signalation (signal replication)
+# signal-kafka-producer a.k.a. signalation
 
 **[Motivation](https://github.com/borea17/signal-kafka-producer#motivation)** | **[Installation](https://github.com/borea17/signal-kafka-producer#installation)**
 
@@ -7,9 +7,9 @@ by querying the [dockerized signal messenger](https://github.com/bbernhard/signa
 
 ## Motivation
 
-### Maintain
-
 ### Kafka Consumers
+
+### Maintain Messages in Message Queue
 
 ## Installation
 
