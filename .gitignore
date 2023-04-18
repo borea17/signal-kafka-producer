@@ -163,9 +163,9 @@ cython_debug/
 .env
 
 # # signal config
-signal-cli-config/
+# signal-cli-config/
 # # kafka storage
-zoo/
-broker/
+# zoo/
+# broker/
 # attachment folder
 attachments/
