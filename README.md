@@ -30,7 +30,7 @@ Having your signal message in a Kafka Topic comes with all kafka associated bene
   Depending on your use-case, you can write consumers that can act on the messages in real-time, e.g.,
   - A service that sends answers from ChatGPT whenever a message starts with `ChatGPT please help:`
   - A service that forwards messages to `Note to Self` whenever a self-destructing message is received.
-- **Flexibility**:
+- **Flexibility**:  
   Kafka Topics can be integrated using other tools such as
   [Kafka Connectors](https://docs.confluent.io/kafka-connectors/self-managed/kafka_connectors.html), e.g.,
   you could use a Kafka DB Sink Connector to store your messages in a database.
