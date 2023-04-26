@@ -15,7 +15,7 @@ As a result, there are two main advantages:
 
 ### Keep (Ephemeral) Messages in Message Queue
 
-We've all been there: You are searching for some information and cannot find the corresponding message.  
+We've all been there: You are searching for some information and cannot find the corresponding message.
 Maybe you've switched your phone, phone number or some of your contacts simply love [Signal's ephemeral/self-destructing messages](https://signal.org/blog/disappearing-by-default/) - in any case `signal-kafka-producer` comes to the rescue. Any message is stored
 in a kafka topic and YOU are the maintainer of it.
 
@@ -26,11 +26,11 @@ However, you can either set infinite time or use a Kafka DB Sink Connector to st
 
 Having your signal message in a Kafka Topic comes with all kafka associated benefits:
 
-- **Real-time processing**:  
+- **Real-time processing**:
   Depending on your use-case, you can write consumers that can act on the messages in real-time, e.g.,
   - A service that sends answers from ChatGPT whenever a message starts with `ChatGPT please help:`
   - A service that forwards messages to `Note to Self` whenever a self-destructing message is received.
-- **Flexibility**:  
+- **Flexibility**:
   Kafka Topics can be integrated using other tools such as
   [Kafka Connectors](https://docs.confluent.io/kafka-connectors/self-managed/kafka_connectors.html), e.g.,
   you could use a Kafka DB Sink Connector to store your messages in a database.
