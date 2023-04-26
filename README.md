@@ -7,13 +7,38 @@ by querying the [dockerized signal messenger API](https://github.com/bbernhard/s
 
 ## Motivation - Why should I use it?
 
-### Kafka Consumers
+After starting the `signal-kafka-producer` all your signal messages (sent and received) are produced onto a kafka topic.
+As a result, there are two main advantages:
 
-### Maintain Messages in Message Queue
+1. Messages do not get lost (at least within the set [Retention Policy](https://www.conduktor.io/kafka/kafka-topic-configuration-log-retention/)), see
+   [Keep (Ephemeral) Messages in Message Queue](<https://github.com/borea17/signal-kafka-producer#keep-(ephemeral)-messages-in-message-queue>)
+2. Use [Kafka Connectors](https://docs.confluent.io/kafka-connectors/self-managed/kafka_connectors.html) or consumers for your use case, see [Kafka Consumers/Connectors](https://github.com/borea17/signal-kafka-producer#kafka-consumers/connectors)
+
+### Keep (Ephemeral) Messages in Message Queue
+
+We've all been there: You are searching for some information and cannot find the corresponding message.  
+Maybe you've switched your phone, phone number or some of your contacts simply love [Signal's ephemeral/self-destructing messages](https://signal.org/blog/disappearing-by-default/) - in any case `signal-kafka-producer` comes to the rescue. Any message is stored
+in a kafka topic and YOU are the maintainer of it.
+
+Note: Messages will be deleted in Kafka as well, see [Retention Policy](https://www.conduktor.io/kafka/kafka-topic-configuration-log-retention/).
+However, you can either set infinite time or use a Kafka DB Sink Connector to store your messages in a database.
+
+### Kafka Consumers/Connectors
+
+Having your signal message in a Kafka Topic comes with all kafka associated benefits:
+
+- **Real-time processing**:  
+  Depending on your use-case, you can write consumers that can act on the messages in real-time, e.g.,
+  - A service that sends answers from ChatGPT whenever a message starts with `ChatGPT please help:`
+  - A service that forwards messages to `Note to Self` whenever a self-destructing message is received.
+- **Flexibility**:
+  Kafka Topics can be integrated using other tools such as
+  [Kafka Connectors](https://docs.confluent.io/kafka-connectors/self-managed/kafka_connectors.html), e.g.,
+  you could use a Kafka DB Sink Connector to store your messages in a database.
 
 ## Installation - How can I use it?
 
-For running the `signal-kafka-producer`, you'll need to have a access to a running instance of [kafka](https://kafka.apache.org/)
+For running the `signal-kafka-producer`, you'll need to have access to a running instance of [kafka](https://kafka.apache.org/)
 and [signal](https://github.com/bbernhard/signal-cli-rest-api). If you do not have that go to
 [Complete Installation including Dockerized Services](https://github.com/borea17/signal-kafka-producer#complete-installation-including-dockerized-services),
 otherwise you can directly use [Pip Installation](https://github.com/borea17/signal-kafka-producer#pip-installation).
