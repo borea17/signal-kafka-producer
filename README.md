@@ -10,9 +10,8 @@ by querying the [dockerized signal messenger API](https://github.com/bbernhard/s
 After starting the `signal-kafka-producer` all your signal messages (sent and received) are produced onto a kafka topic.
 As a result, there are two main advantages:
 
-1. Messages do not get lost (at least within the set [Retention Policy](https://www.conduktor.io/kafka/kafka-topic-configuration-log-retention/)), see
-   [Keep (Ephemeral) Messages in Message Queue](<https://github.com/borea17/signal-kafka-producer#keep-(ephemeral)-messages-in-message-queue>)
-2. Use [Kafka Connectors](https://docs.confluent.io/kafka-connectors/self-managed/kafka_connectors.html) or consumers for your use case, see [Kafka Consumers/Connectors](https://github.com/borea17/signal-kafka-producer#kafka-consumers/connectors)
+1. Messages do not get lost, see [Keep (Ephemeral) Messages in Message Queue](https://github.com/borea17/signal-kafka-producer#keep-ephemeral-messages-in-message-queue)
+2. Use [Kafka Connectors](https://docs.confluent.io/kafka-connectors/self-managed/kafka_connectors.html) or consumers for your use case, see [Kafka Consumers/Connectors](https://github.com/borea17/signal-kafka-producer#kafka-consumersconnectors)
 
 ### Keep (Ephemeral) Messages in Message Queue
 
