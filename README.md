@@ -121,6 +121,30 @@ Note: You'll need to register your phone number with for the
 in the terminal.
 
 You should see your produced messages on the kafka ui [https://localhost:8081](https://localhost:8081)
-(use port from `.env` file).
+(use `KAFKA__UI__PORT` from `.env` file).
 
 ## Implementation Details - How does it work?
+
+`signal-kafka-producer` calls `src/signalation/services/producer.py` which has the following logic:
+
+1. It pools the Signal server and retrieves new Signal messages with their metadata
+2. It produces the messages to a Kafka topic.
+3. If a message has an attachment, it downloads it and stores the file locally.  
+   Additionally, corresponding metadata of the attachment is produced to a separate Kafka topic.
+
+Here is a more detailed description given by ChatGPT:
+
+> The `run` function is the main entry point of the code. It retrieves configuration settings from an environment file
+> and initializes a Kafka producer object. Then, it repeatedly calls the `run_message_loop_iteration` function,
+> which retrieves Signal messages and their attachments, produces them to the relevant Kafka topics, and sleeps for
+> a specified duration before it starts the next iteration.
+>
+> The `receive_messages` function sends a `GET` request to the Signal server to retrieve new messages for a
+> given registered number. It returns a list of Signal messages, each represented by a `SignalMessage` object.
+> The `receive_attachments` function sends a GET request to the Signal server to retrieve attachments associated
+> with a given list of messages. It returns a list of `AttachmentFile` objects, each representing a Signal attachment file.
+>
+> The `produce_messages` function takes a list of `SignalMessage` objects and a Kafka producer object,
+> and produces them to the message topic.
+>
+> Finally, the `EnhancedEncoder` class is a custom JSON encoder that converts Python objects into JSON strings.
