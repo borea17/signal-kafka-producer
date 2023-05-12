@@ -39,6 +39,12 @@ class AttachmentMetaData(BaseModel):
 
 class AttachmentFile(AttachmentMetaData):
     attachment_bytes_str: str
+    """Attachment bytes represented in a string.
+
+    Notes:
+        - input to this field can be bytes or string (pydantic validator takes care of encoding)
+        - we don't want to store raw bytes here, since these are not json-serializable
+    """
 
     @validator("attachment_bytes_str", always=True, pre=True)
     def bytes_to_str(cls, attachment_byte_or_str: bytes | str) -> str:

@@ -125,6 +125,7 @@ def receive_messages(signal_config: SignalConfig) -> list[SignalMessage]:
 
     signal_messages = []
     for message_dict in result_json:
+        print(message_dict)
         try:
             signal_message = SignalMessage.parse_obj(message_dict)
             signal_messages.append(signal_message)

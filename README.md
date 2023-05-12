@@ -1,4 +1,5 @@
 # signal-kafka-producer a.k.a. signalation
+
 [![Python package](https://github.com/borea17/signal-kafka-producer/actions/workflows/python-package.yml/badge.svg?branch=main)](https://github.com/borea17/signal-kafka-producer/actions/workflows/python-package.yml)
 
 **[Motivation](https://github.com/borea17/signal-kafka-producer#motivation---why-should-i-use-it)** | **[Installation](https://github.com/borea17/signal-kafka-producer#installation---how-can-i-use-it)** | **[Implementation Details](https://github.com/borea17/signal-kafka-producer#implementation-details---how-does-it-work)**
@@ -121,7 +122,7 @@ Note: You'll need to register your phone number with for the
 [dockerized signal messenger](https://github.com/bbernhard/signal-cli-rest-api). Simply follow the instructions
 in the terminal.
 
-You should see your produced messages on the kafka ui [https://localhost:8081](https://localhost:8081)
+You should see your produced messages on the kafka ui [http://localhost:8081/](https://localhost:8081)
 (use `KAFKA__UI__PORT` from `.env` file).
 
 ## Implementation Details - How does it work?
