@@ -1,10 +1,10 @@
-from pathlib import Path
 import pickle
+from pathlib import Path
 from typing import Any
 
 import pytest
 
-from signalation.conf.settings import Config, get_config, SignalConfig
+from signalation.conf.settings import Config, SignalConfig, get_config
 
 TESTS_DIR = Path(__file__).parents[0]
 TEST_ENV_PATH = TESTS_DIR / "data" / "test.env"

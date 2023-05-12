@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from signalation.conf.settings import Config
 
 

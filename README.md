@@ -131,7 +131,7 @@ You should see your produced messages on the kafka ui [http://localhost:8081/](h
 
 1. It pools the Signal server and retrieves new Signal messages with their metadata
 2. It produces the messages to a Kafka topic.
-3. If a message has an attachment, it downloads it and stores the file locally.  
+3. If a message has an attachment, it downloads it and stores the file locally.
    Additionally, corresponding metadata of the attachment is produced to a separate Kafka topic.
 
 Here is a more detailed description given by ChatGPT:
