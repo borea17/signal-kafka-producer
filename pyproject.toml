@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "signalation"
-version = "0.0.0"
+version = "1.0.0"
 description = "Produce your messages from your signal account to kafka."
 readme = "README.md"
 authors = [{name="Markus Borea", email="borea17@protonmail.com"}]

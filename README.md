@@ -1,6 +1,6 @@
 # signal-kafka-producer a.k.a. signalation
 
-[![Python package](https://github.com/borea17/signal-kafka-producer/actions/workflows/python-package.yml/badge.svg?branch=main)](https://github.com/borea17/signal-kafka-producer/actions/workflows/python-package.yml)
+[![Python package](https://github.com/borea17/signal-kafka-producer/actions/workflows/python-package.yml/badge.svg?branch=main)](https://github.com/borea17/signal-kafka-producer/actions/workflows/python-package.yml) [![PyPI version](https://badge.fury.io/py/signalation.svg)](https://badge.fury.io/py/signalation)
 
 **[Motivation](https://github.com/borea17/signal-kafka-producer#motivation---why-should-i-use-it)** | **[Installation](https://github.com/borea17/signal-kafka-producer#installation---how-can-i-use-it)** | **[Implementation Details](https://github.com/borea17/signal-kafka-producer#implementation-details---how-does-it-work)**
 
