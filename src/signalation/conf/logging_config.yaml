@@ -1,5 +1,5 @@
 version: 1
-disable_existing_loggers: true
+disable_existing_loggers: false
 
 formatters:
     colored:
@@ -63,13 +63,8 @@ handlers:
         backupCount: 20
         encoding: utf8
 
-root:
-    level: NOTSET
-    handlers: [console]
-    propogate: yes
-
 loggers:
     signalation:
         level: DEBUG
-        handlers: [info_file_handler, error_file_handler, critical_file_handler, debug_file_handler, warn_file_handler]
-        propogate: no
+        handlers: [console, info_file_handler, error_file_handler, critical_file_handler, debug_file_handler, warn_file_handler]
+        propogate: yes

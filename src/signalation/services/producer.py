@@ -12,7 +12,7 @@ from signalation.conf.settings import Config, SignalConfig, get_config
 from signalation.entities.attachment import AttachmentFile
 from signalation.entities.signal_message import SignalMessage
 
-logger = get_logger(__file__)
+logger = get_logger(__name__)
 KAFKA_MESSAGE_TOPIC = "signal"
 KAFKA_ATTACHMENT_TOPIC = "signal_attachments"
 
